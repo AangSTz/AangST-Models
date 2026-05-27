@@ -1,0 +1,40 @@
+name: Auto Convert Modular DFF/TXD to CRC32
+
+on:
+  workflow_dispatch:
+
+jobs:
+  convert-and-commit:
+    runs-on: ubuntu-latest
+    
+    permissions:
+      contents: write 
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.10'
+
+      - name: Run Modular CRC32 Script
+        run: python workflow_crc32_keep.py
+
+      - name: Commit and Push Changes
+        run: |
+          git config --global user.name "github-actions[bot]"
+          git config --global user.email "github-actions[bot]@users.noreply.github.com"
+          
+          # Menggunakan git add . agar mendeteksi file 0x* baru di sub-folder manapun
+          git add .
+          
+          # Cek apakah ada file baru. Jika ada, lakukan commit dan push
+          if ! git diff --staged --quiet; then
+            git commit -m "Auto-generate modular CRC32 files in their respective paths"
+            git push
+            echo "✅ File baru di sub-folder berhasil di-commit dan di-push!"
+          else
+            echo "⏩ Tidak ada file baru yang terdeteksi."
+          fi
